@@ -16,11 +16,82 @@ Design note:
 - Default ('tree_path_dependent') is faster and well-suited for tree models.
 - We use the default here; interventional can be enabled via parameter.
 """
+import re
 import time
+import warnings
 import numpy as np
 import shap
 
 from phase1.config import SHAP_BACKGROUND_SAMPLES, FEATURE_NAMES
+
+
+def _build_tree_explainer(model, X_train: np.ndarray,
+                          feature_perturbation: str = "tree_path_dependent",
+                          background: np.ndarray = None):
+    """
+    Build a shap.TreeExplainer, working around the XGBoost 2.0 / SHAP < 0.44
+    incompatibility where base_score is serialized as '[2.4783702E-1]' instead
+    of a plain float.
+
+    Fix hierarchy:
+      1. Try shap.TreeExplainer directly (works when versions are compatible).
+      2. If ValueError on base_score, patch the XGBoost booster config in-place
+         and retry — preserves exact TreeSHAP without falling back to KernelSHAP.
+    """
+    try:
+        if background is not None:
+            return shap.TreeExplainer(model, data=background,
+                                      feature_perturbation=feature_perturbation)
+        return shap.TreeExplainer(model)
+    except ValueError as e:
+        if "could not convert string to float" not in str(e):
+            raise
+
+    warnings.warn(
+        "shap.TreeExplainer failed due to XGBoost 2.0 / SHAP version mismatch "
+        "(base_score format changed). Applying automatic patch. "
+        "To silence this warning: pip install --upgrade shap",
+        UserWarning, stacklevel=3,
+    )
+
+    # --- Patch: strip the brackets from base_score in the booster JSON config ---
+    import json
+    booster = model.get_booster()
+    cfg = json.loads(booster.save_config())
+
+    def _fix_base_score(obj):
+        """Recursively find and normalize bracketed base_score strings."""
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == "base_score" and isinstance(v, str):
+                    # '[2.4783702E-1]'  ->  '0.24783702'
+                    cleaned = re.sub(r"[\[\]]", "", v).strip()
+                    try:
+                        obj[k] = str(float(cleaned))
+                    except ValueError:
+                        pass
+                else:
+                    _fix_base_score(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                _fix_base_score(item)
+
+    _fix_base_score(cfg)
+    booster.load_config(json.dumps(cfg))
+
+    # Reload the patched booster into a fresh XGBClassifier copy
+    import copy, tempfile, os
+    model_patched = copy.copy(model)
+    with tempfile.NamedTemporaryFile(suffix=".ubj", delete=False) as f:
+        tmp = f.name
+    booster.save_model(tmp)
+    model_patched.load_model(tmp)
+    os.unlink(tmp)
+
+    if background is not None:
+        return shap.TreeExplainer(model_patched, data=background,
+                                  feature_perturbation=feature_perturbation)
+    return shap.TreeExplainer(model_patched)
 
 
 class SHAPExplainer:
@@ -49,12 +120,12 @@ class SHAPExplainer:
             idx = np.random.choice(len(X_train), size=min(SHAP_BACKGROUND_SAMPLES, len(X_train)),
                                    replace=False)
             background = X_train[idx]
-            self.explainer = shap.TreeExplainer(
-                model, data=background,
-                feature_perturbation="interventional"
+            self.explainer = _build_tree_explainer(
+                model, X_train, feature_perturbation="interventional",
+                background=background,
             )
         else:
-            self.explainer = shap.TreeExplainer(model)
+            self.explainer = _build_tree_explainer(model, X_train)
 
         self.expected_value = self.explainer.expected_value
         # For binary classification, expected_value may be a list [neg, pos]
