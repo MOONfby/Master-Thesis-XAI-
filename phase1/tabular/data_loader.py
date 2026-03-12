@@ -21,7 +21,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 
-from phase1.config import (
+from phase1.tabular.config import (
     DATA_DIR, RANDOM_STATE, TEST_SIZE,
     NUMERICAL_FEATURES, CATEGORICAL_FEATURES, FEATURE_NAMES, TARGET
 )

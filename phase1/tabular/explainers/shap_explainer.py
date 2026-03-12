@@ -22,7 +22,7 @@ import numpy as np
 import xgboost as xgb
 import shap
 
-from phase1.config import SHAP_BACKGROUND_SAMPLES, FEATURE_NAMES
+from phase1.tabular.config import SHAP_BACKGROUND_SAMPLES, FEATURE_NAMES
 
 
 class SHAPExplainer:

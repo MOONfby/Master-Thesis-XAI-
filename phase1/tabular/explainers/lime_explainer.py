@@ -15,7 +15,7 @@ import time
 import numpy as np
 from lime.lime_tabular import LimeTabularExplainer
 
-from phase1.config import (
+from phase1.tabular.config import (
     LIME_N_SAMPLES, LIME_N_FEATURES, FEATURE_NAMES, RANDOM_STATE
 )
 

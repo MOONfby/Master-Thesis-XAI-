@@ -22,11 +22,11 @@ import sys
 import argparse
 import numpy as np
 
-from phase1.data_loader import load_adult_income
-from phase1.model_trainer import train_model
-from phase1.explainers import LIMEExplainer, SHAPExplainer, DiCEExplainer
-from phase1.evaluation.evaluator import Phase1Evaluator
-from phase1.visualization.plots import generate_all_plots
+from phase1.tabular.data_loader import load_adult_income
+from phase1.tabular.model_trainer import train_model
+from phase1.tabular.explainers import LIMEExplainer, SHAPExplainer, DiCEExplainer
+from phase1.tabular.evaluation.evaluator import Phase1Evaluator
+from phase1.tabular.visualization.plots import generate_all_plots
 
 
 def parse_args():

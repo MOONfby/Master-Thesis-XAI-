@@ -12,7 +12,7 @@ from pathlib import Path
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, classification_report
 import xgboost as xgb
 
-from phase1.config import SAVED_MODEL_DIR, XGBOOST_PARAMS, RANDOM_STATE
+from phase1.tabular.config import SAVED_MODEL_DIR, XGBOOST_PARAMS, RANDOM_STATE
 
 
 def train_model(X_train: np.ndarray, y_train: np.ndarray,

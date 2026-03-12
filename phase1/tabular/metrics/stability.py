@@ -33,7 +33,7 @@ import numpy as np
 from scipy.stats import spearmanr
 from tqdm import tqdm
 
-from phase1.config import (
+from phase1.tabular.config import (
     STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD, RANDOM_STATE,
     NUMERICAL_FEATURES
 )

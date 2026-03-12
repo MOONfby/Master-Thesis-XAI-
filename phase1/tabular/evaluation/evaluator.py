@@ -32,16 +32,16 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from phase1.config import (
+from phase1.tabular.config import (
     EVAL_SAMPLE_SIZE, FAITHFULNESS_N_STEPS, FAITHFULNESS_TOP_K,
     STABILITY_SAMPLE_SIZE, STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD,
     CF_NUM_CFS, LIME_N_SAMPLES, LIME_N_FEATURES, RESULTS_DIR, RANDOM_STATE
 )
-from phase1.metrics.faithfulness import (
+from phase1.tabular.metrics.faithfulness import (
     aopc_score, comprehensiveness, sufficiency, lime_local_fidelity_batch
 )
-from phase1.metrics.stability import rank_correlation_stability, average_sensitivity
-from phase1.metrics.cf_metrics import evaluate_counterfactuals
+from phase1.tabular.metrics.stability import rank_correlation_stability, average_sensitivity
+from phase1.tabular.metrics.cf_metrics import evaluate_counterfactuals
 
 
 class Phase1Evaluator:

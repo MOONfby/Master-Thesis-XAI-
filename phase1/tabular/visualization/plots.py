@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
 
-from phase1.config import FIGURES_DIR, FEATURE_NAMES
+from phase1.tabular.config import FIGURES_DIR, FEATURE_NAMES
 
 # Use a consistent, clean style
 plt.rcParams.update({

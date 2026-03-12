@@ -24,7 +24,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from phase1.config import (
+from phase1.tabular.config import (
     CF_NUM_CFS, CF_DESIRED_CLASS, CF_METHOD,
     FEATURE_NAMES, NUMERICAL_FEATURES, CATEGORICAL_FEATURES,
     TARGET, RANDOM_STATE

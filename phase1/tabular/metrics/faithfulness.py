@@ -39,7 +39,7 @@ References:
 import numpy as np
 from tqdm import tqdm
 
-from phase1.config import FAITHFULNESS_N_STEPS, FAITHFULNESS_TOP_K
+from phase1.tabular.config import FAITHFULNESS_N_STEPS, FAITHFULNESS_TOP_K
 
 
 def aopc_score(
