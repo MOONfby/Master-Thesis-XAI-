@@ -110,19 +110,23 @@ class GradientSHAPExplainer:
         t = torch.tensor(image[None], dtype=torch.float32,
                          device=self.device)   # (1, 3, H, W)
 
+        with torch.no_grad():
+            logits = self.model(t)
         if label is None:
-            with torch.no_grad():
-                logits = self.model(t)
             label = int(logits[0].argmax().item())
 
-        # shap_values: list of len(outputs), each (N, 3, H, W)
         shap_values = self._explainer.shap_values(
             t, ranked_outputs=None
         )
-        # Select the target class; result: (1, 3, H, W)
-        sv = shap_values[label]            # (1, 3, H, W)
-        sv = np.abs(sv[0])                 # (3, H, W)
-        heatmap = sv.sum(axis=0)           # (H, W) — sum across RGB channels
+        if isinstance(shap_values, list):
+            # Old shap API: list of arrays, one per class → index by label
+            sv = shap_values[label][0]   # (3, H, W)
+        else:
+            # New shap API: single ndarray (N, 3, H, W) for top predicted class
+            sv = shap_values[0]          # (3, H, W)
+
+        sv = np.abs(sv)
+        heatmap = sv.sum(axis=0)        # (H, W)
         return heatmap
 
     def measure_runtime(self, images: np.ndarray,

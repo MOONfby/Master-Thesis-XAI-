@@ -83,11 +83,12 @@ class LIMEImageExplainer:
             segmentation_fn=lambda x: segment_map,  # use pre-computed SLIC
         )
 
-        # Extract weights for the target label: list of (segment_id, weight)
-        seg_weights = dict(explanation.local_exp[label])
-        S = int(segment_map.max()) + 1
-        attrs = np.array([seg_weights.get(s, 0.0) for s in range(S)],
-                         dtype=np.float64)
+        # Extract weights for the target label: list of (segment_id, weight)                                                 
+        seg_weights = dict(explanation.local_exp[label])                                                                     
+        # Always output exactly N_SEGMENTS values regardless of actual SLIC count                                            
+        attrs = np.zeros(N_SEGMENTS, dtype=np.float64)                                                                       
+        for s, w in seg_weights.items():                                                                                     
+            if s < N_SEGMENTS:                                                                                                                 attrs[s] = w                                                                                                 
         return attrs
 
     def explain_batch(self, images: np.ndarray, segment_maps: np.ndarray,
