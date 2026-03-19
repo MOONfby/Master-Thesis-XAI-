@@ -172,12 +172,8 @@ class Phase1ImageEvaluator:
 
         for name, exp in [("LIME", self.lime_exp),
                           ("GradSHAP", self.gradshap_exp)]:
-            print(f"  [{name}] Rank Correlation Stability...")
-            _, results[f"{name}_RankCorrelation"] = rank_correlation_stability(
-                exp, self.X_stab, self.stab_maps,
-                STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD
-            )
-            print(f"    {name} Rank Corr = {results[f'{name}_RankCorrelation']:.4f}")
+            print(f"  [{name}] Rank Correlation Stability... [SKIPPED]")
+            results[f"{name}_RankCorrelation"] = float("nan")
 
             print(f"  [{name}] Average Sensitivity...")
             _, results[f"{name}_AvgSensitivity"] = average_sensitivity(
