@@ -123,11 +123,14 @@ class GradientSHAPExplainer:
             # Old shap API: list of arrays, one per class → index by label
             sv = shap_values[label][0]   # (3, H, W)
         else:
-            # New shap API: single ndarray (N, 3, H, W) for top predicted class
-            sv = shap_values[0]          # (3, H, W)
+            # New shap API: single ndarray, first element along batch dim
+            sv = shap_values[0]
 
-        sv = np.abs(sv)
-        heatmap = sv.sum(axis=0)        # (H, W)
+        # sv may be (3,H,W), (1,3,H,W), or other shapes depending on shap version.
+        # Robustly collapse to (H, W) by reshaping to (K, H, W) then summing.
+        H, W = image.shape[-2], image.shape[-1]
+        sv = np.abs(sv).reshape(-1, H, W)  # (K, H, W)
+        heatmap = sv.sum(axis=0)            # (H, W)
         return heatmap
 
     def measure_runtime(self, images: np.ndarray,
