@@ -170,17 +170,27 @@ class Phase1ImageEvaluator:
         print("\n--- Stability Metrics ---")
         results = {}
 
-        for name, exp in [("LIME", self.lime_exp),
-                          ("GradSHAP", self.gradshap_exp)]:
-            print(f"  [{name}] Rank Correlation Stability... [SKIPPED]")
-            results[f"{name}_RankCorrelation"] = float("nan")
+        # LIME stability (fast enough to run)
+        print("  [LIME] Rank Correlation Stability...")
+        _, results["LIME_RankCorrelation"] = rank_correlation_stability(
+            self.lime_exp, self.X_stab, self.stab_maps,
+            STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD
+        )
+        print(f"    LIME Rank Corr = {results['LIME_RankCorrelation']:.4f}")
 
-            print(f"  [{name}] Average Sensitivity...")
-            _, results[f"{name}_AvgSensitivity"] = average_sensitivity(
-                exp, self.X_stab, self.stab_maps,
-                STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD
-            )
-            print(f"    {name} Avg Sens = {results[f'{name}_AvgSensitivity']:.4f}")
+        print("  [LIME] Average Sensitivity...")
+        _, results["LIME_AvgSensitivity"] = average_sensitivity(
+            self.lime_exp, self.X_stab, self.stab_maps,
+            STABILITY_N_PERTURBATIONS, STABILITY_NOISE_STD
+        )
+        print(f"    LIME Avg Sens = {results['LIME_AvgSensitivity']:.4f}")
+
+        # GradientSHAP stability skipped — each call takes ~2s,
+        # 50 images × 11 calls = ~18 min per metric
+        print("  [GradSHAP] Rank Correlation Stability... [SKIPPED]")
+        results["GradSHAP_RankCorrelation"] = float("nan")
+        print("  [GradSHAP] Average Sensitivity... [SKIPPED]")
+        results["GradSHAP_AvgSensitivity"] = float("nan")
 
         return results
 
