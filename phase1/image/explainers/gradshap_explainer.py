@@ -116,20 +116,23 @@ class GradientSHAPExplainer:
         if label is None:
             label = int(logits[0].argmax().item())
 
-        shap_values = self._explainer.shap_values(
-            t, ranked_outputs=None
-        )
-        if isinstance(shap_values, list):
-            # Old shap API: list of arrays, one per class → index by label
-            sv = shap_values[label][0]   # (3, H, W)
-        else:
-            # New shap API: single ndarray, first element along batch dim
-            sv = shap_values[0]
+        # ranked_outputs=1 computes gradients only for the top predicted class,
+        # avoiding the uniform-heatmap bug caused by summing all 200 classes,
+        # and is ~200x faster than ranked_outputs=None.
+        shap_out = self._explainer.shap_values(t, ranked_outputs=1)
 
-        # sv may be (3,H,W), (1,3,H,W), or other shapes depending on shap version.
-        # Robustly collapse to (H, W) by reshaping to (K, H, W) then summing.
+        # ranked_outputs=1 returns (values, indices) tuple in all shap versions.
+        # values shape: (N, C, H, W, 1) or (N, C, H, W) depending on version.
+        if isinstance(shap_out, tuple):
+            sv = shap_out[0][0]   # drop batch dim → (C, H, W, 1) or (C, H, W)
+        elif isinstance(shap_out, list):
+            sv = shap_out[0][0]   # old list API fallback
+        else:
+            sv = shap_out[0]
+
+        # Robustly collapse any trailing dims to (H, W)
         H, W = image.shape[-2], image.shape[-1]
-        sv = np.abs(sv).reshape(-1, H, W)  # (K, H, W)
+        sv = np.abs(sv).reshape(-1, H, W)  # (C, H, W) with any extra dims flattened
         heatmap = sv.sum(axis=0)            # (H, W)
         return heatmap
 
