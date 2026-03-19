@@ -66,7 +66,7 @@ class GradientSHAPExplainer:
             Superpixel-level SHAP values (mean of |pixel SHAP| per segment).
         """
         pixel_heatmap = self.explain_pixel_level(image, label=label)
-        return aggregate_to_superpixels(pixel_heatmap, segment_map)
+        return aggregate_to_superpixels(pixel_heatmap, segment_map, n_segments=N_SEGMENTS)
 
     def explain_batch(self, images: np.ndarray, segment_maps: np.ndarray,
                       labels: np.ndarray = None) -> np.ndarray:

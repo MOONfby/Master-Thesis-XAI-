@@ -8,7 +8,8 @@ import numpy as np
 
 
 def aggregate_to_superpixels(pixel_heatmap: np.ndarray,
-                              segment_map: np.ndarray) -> np.ndarray:
+                              segment_map: np.ndarray,
+                              n_segments: int = None) -> np.ndarray:
     """
     Aggregate a pixel-level attribution heatmap to superpixel-level attributions.
 
@@ -18,13 +19,16 @@ def aggregate_to_superpixels(pixel_heatmap: np.ndarray,
         Per-pixel attribution values (summed/averaged across channels if needed).
     segment_map : np.ndarray, shape (H, W), dtype int
         Integer superpixel label per pixel (from SLIC). Labels in [0, S-1].
+    n_segments : int or None
+        Fixed output size. If None, inferred from segment_map.max() + 1.
+        Always pass N_SEGMENTS to ensure consistent output shape across images.
 
     Returns
     -------
-    np.ndarray, shape (S,)
+    np.ndarray, shape (n_segments,)
         Mean attribution per superpixel segment.
     """
-    S = int(segment_map.max()) + 1
+    S = n_segments if n_segments is not None else int(segment_map.max()) + 1
     attrs = np.zeros(S, dtype=np.float64)
     for s in range(S):
         mask = segment_map == s
