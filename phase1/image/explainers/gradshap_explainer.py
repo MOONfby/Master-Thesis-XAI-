@@ -94,6 +94,7 @@ class GradientSHAPExplainer:
         return np.stack(results)
 
     def explain_pixel_level(self, image: np.ndarray,
+                             segment_map: np.ndarray = None,
                              label: int = None) -> np.ndarray:
         """
         Return pixel-level SHAP heatmap (H, W).
