@@ -99,6 +99,7 @@ class IntegratedGradientsExplainer:
         return np.stack(results)
 
     def explain_timestep_level(self, series: np.ndarray,
+                                segment_map: np.ndarray = None,
                                 label: int = None) -> np.ndarray:
         """
         Return per-timestep IG attributions, shape (T,).
