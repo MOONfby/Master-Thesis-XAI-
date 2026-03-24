@@ -90,14 +90,17 @@ class TimeSHAPExplainer:
         self._current_smap   = segment_map
         self._target_label   = label
 
+        # Wrap predict_fn to return only the target class probability (scalar per sample).
+        # Single-output KernelExplainer always returns a plain (n_samples, n_features)
+        # array regardless of SHAP version — avoids multi-output format ambiguity.
+        def _single_class_predict(z_batch: np.ndarray) -> np.ndarray:
+            probs = self._segment_predict_fn(z_batch)   # (M, C)
+            return probs[:, label]                       # (M,)
+
         # Background: single all-zeros binary vector (all segments absent)
-        # This means the baseline prediction = f(baseline_series)
         background = np.zeros((1, S), dtype=np.float32)
 
-        explainer = shap.KernelExplainer(
-            self._segment_predict_fn,
-            background,
-        )
+        explainer = shap.KernelExplainer(_single_class_predict, background)
 
         # The instance to explain: all segments present
         instance = np.ones((1, S), dtype=np.float32)
@@ -108,18 +111,8 @@ class TimeSHAPExplainer:
             silent=True,
         )
 
-        # shap_values may be list (multi-output) or ndarray depending on shap version.
-        # list: [class_0_array, class_1_array, ...] each shape (1, S)
-        # ndarray: shape (1, S) for single output, or (C, 1, S) for multi-output
-        if isinstance(shap_values, list):
-            sv = shap_values[label]   # (1, S)
-        elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
-            sv = shap_values[label]   # (1, S)
-        else:
-            sv = shap_values          # (1, S)
-
-        # Ensure 1D output (S,)
-        sv = np.array(sv).squeeze()
+        # Single-output model → shap_values shape is always (1, S)
+        sv = np.array(shap_values).squeeze()   # (S,)
         return sv.astype(np.float64)
 
     def explain_batch(self, series_batch: np.ndarray,
