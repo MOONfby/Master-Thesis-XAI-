@@ -102,7 +102,8 @@ def main():
     if not args.no_plots:
         print("\n[5/5] Generating figures...")
         generate_all_ts_plots(
-            data           = data,
+            X_eval         = evaluator.X_eval,
+            y_eval         = evaluator.y_eval,
             results        = results,
             lime_attrs     = evaluator.lime_attrs,
             timeshap_attrs = evaluator.timeshap_attrs,

@@ -23,7 +23,9 @@ from phase2.timeseries.config import (
 from phase2.timeseries.utils import build_segment_map
 
 
-def generate_all_ts_plots(data: dict, results: dict,
+def generate_all_ts_plots(X_eval: np.ndarray,
+                           y_eval: np.ndarray,
+                           results: dict,
                            lime_attrs: np.ndarray,
                            timeshap_attrs: np.ndarray,
                            ig_attrs: np.ndarray,
@@ -33,15 +35,17 @@ def generate_all_ts_plots(data: dict, results: dict,
 
     Parameters
     ----------
-    data : dict — output of load_ecg5000()
+    X_eval : (N, 1, T) — eval series (from evaluator.X_eval, not data["X_test"])
+    y_eval : (N,) — eval labels
     results : dict — output of evaluator.run()
     lime_attrs, timeshap_attrs, ig_attrs : (N, S) attribution arrays
     n_examples : int — number of example series to plot
     """
     TS_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-    X_eval = data["X_test"][:n_examples]
-    y_eval = data["y_test"][:n_examples]
+    n_examples = min(n_examples, len(X_eval))
+    X_eval = X_eval[:n_examples]
+    y_eval = y_eval[:n_examples]
     segment_map = build_segment_map()
 
     print("  Generating attribution heatmap overlays...")
