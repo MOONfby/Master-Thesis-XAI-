@@ -108,12 +108,18 @@ class TimeSHAPExplainer:
             silent=True,
         )
 
-        # shap_values may be list (multi-output) or array
+        # shap_values may be list (multi-output) or ndarray depending on shap version.
+        # list: [class_0_array, class_1_array, ...] each shape (1, S)
+        # ndarray: shape (1, S) for single output, or (C, 1, S) for multi-output
         if isinstance(shap_values, list):
-            sv = shap_values[label][0]    # class label, first instance
+            sv = shap_values[label]   # (1, S)
+        elif isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+            sv = shap_values[label]   # (1, S)
         else:
-            sv = shap_values[0]
+            sv = shap_values          # (1, S)
 
+        # Ensure 1D output (S,)
+        sv = np.array(sv).squeeze()
         return sv.astype(np.float64)
 
     def explain_batch(self, series_batch: np.ndarray,
