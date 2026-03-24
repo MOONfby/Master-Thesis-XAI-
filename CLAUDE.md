@@ -8,7 +8,7 @@ KTH Master's thesis: *"Bridging Technical and Regulatory Transparency: A Multi-M
 
 Three phases:
 1. **Phase 1** (implemented): XAI evaluation on tabular data (Adult Income + XGBoost) and image data (CUB-200-2011 + ResNet-50)
-2. **Phase 2** (planned): Explainer network via knowledge distillation (FastSHAP-style), using GradientSHAP outputs from Phase 1 as training targets
+2. **Phase 2** (implemented): XAI evaluation on time series data (ECG5000 + InceptionTime) — LIME-TS, TimeSHAP, Integrated Gradients
 3. **Phase 3** (planned): Interactive LLM dashboard for human-readable explanations
 
 ## Running the Code
@@ -27,6 +27,12 @@ python run_phase1.py --force-reload   # re-download data and retrain model
 python run_phase1_image.py                      # full evaluation (downloads CUB-200, fine-tunes ResNet-50)
 python run_phase1_image.py --skip-localization  # skip Pointing Game / Seg IoU
 python run_phase1_image.py --force-reload       # re-download and retrain
+
+# Phase 2 — Time Series
+python run_phase2_ts.py                         # full evaluation (downloads ECG5000, trains InceptionTime)
+python run_phase2_ts.py --skip-localization     # skip temporal QRS localisation metrics
+python run_phase2_ts.py --force-reload          # re-download and retrain
+python run_phase2_ts.py --no-plots              # skip figure generation
 ```
 
 ## Architecture
@@ -37,6 +43,8 @@ python run_phase1_image.py --force-reload       # re-download and retrain
 phase1/
 ├── tabular/    ← Adult Income + XGBoost evaluation (LIME, SHAP, DiCE)
 └── image/      ← CUB-200-2011 + ResNet-50 evaluation (LIME-image, GradientSHAP)
+phase2/
+└── timeseries/ ← ECG5000 + InceptionTime evaluation (LIME-TS, TimeSHAP, Integrated Gradients)
 ```
 
 Each subpackage follows the same layout: `config.py`, `data_loader.py`, `model_trainer.py`, `explainers/`, `metrics/`, `evaluation/evaluator.py`, `visualization/plots.py`.
@@ -68,7 +76,9 @@ Image explainers additionally implement `explain_pixel_level()` returning `(H, W
 
 **Image** (`phase1/image/metrics/`): same faithfulness/stability metrics adapted for superpixel masking via `apply_superpixel_mask()`, plus Insertion/Deletion AUC (image-specific), and localization (Pointing Game, Segmentation IoU) using CUB-200-2011 GT bounding boxes and segmentation masks.
 
-Perturbation baseline: tabular uses training-set column means; image uses per-channel training-set mean image (`baseline_image` in data dict).
+**Time Series** (`phase2/timeseries/metrics/`): identical faithfulness/stability formulas adapted for temporal segment masking via `apply_temporal_mask()`. Temporal segments (uniform windows, `N_SEGMENTS_TS=20`, 7 timesteps each) play the same role as superpixels. Localization uses QRS complex windows (detected via R-peak) instead of bounding boxes.
+
+Perturbation baseline: tabular uses training-set column means; image uses per-channel training-set mean image; time series uses per-channel training-set mean series (`baseline_series` in data dict).
 
 ### Configuration
 
@@ -83,6 +93,7 @@ Hyperparameters are in `phase1/tabular/config.py` and `phase1/image/config.py`. 
 |---|---|---|---|---|
 | Tabular | `data/adult_processed.pkl` | `models/xgboost_adult.pkl` | `results/phase1/metrics_summary.csv` | `results/phase1/figures/` |
 | Image | `data/cub200/cub200_processed.pkl` | `models/resnet50_cub.pth` | `results/phase1_image/metrics_summary.csv` | `results/phase1_image/figures/` |
+| Time Series | `data/ecg5000/ecg5000_processed.pkl` | `models/inceptiontime_ecg5000.pth` | `results/phase2_ts/metrics_summary.csv` | `results/phase2_ts/figures/` |
 
 ## Key Design Decisions
 
@@ -92,6 +103,14 @@ Hyperparameters are in `phase1/tabular/config.py` and `phase1/image/config.py`. 
 - **Stability perturbation**: tabular perturbs only `num_indices` (avoids invalid categoricals); image applies Gaussian noise to all pixels and clips to `[0, 1]`.
 - **Figures** use `matplotlib.use("Agg")` — do not change when running headlessly.
 
-## Adding Phase 2
+## Phase 2 Time Series Design
 
-Place in `phase2/`. Training targets are GradientSHAP attributions from `phase1/image/explainers/gradshap_explainer.py` (`explain_batch` output). The ExplainerNetwork (MLP) maps raw image features → SHAP-approximating `(S,)` vectors. Evaluate with MSE, rank correlation vs. GradientSHAP, and inference time speedup.
+**Temporal segment as feature unit**: Series of length T=140 divided into `N_SEGMENTS_TS=20` uniform windows of 7 timesteps each. All three explainers output `(20,)` attribution vectors, enabling direct reuse of faithfulness/stability metric logic from Phase 1.
+
+**InceptionTime architecture**: `InceptionTimeWithResiduals` in `phase2/timeseries/model_trainer.py`. Residual shortcuts every 3 Inception blocks. Input `(batch, 1, 140)` → Output `(batch, 5)`.
+
+**TimeSHAP uses KernelSHAP at segment level** (`phase2/timeseries/explainers/timeshap_explainer.py`): treats each segment as a binary SHAP player. Background = all-absent binary vector → model evaluates `f(baseline_series)`. Model-agnostic, slower than IG.
+
+**Integrated Gradients** requires `captum` (`pip install captum`). Computes attributions relative to `baseline_series`. Fastest of the three methods.
+
+**QRS localisation ground truth**: detected via R-peak (argmax of |series|) ± 10 timesteps. Stored in `data["qrs_windows"]` and recomputed for test batches in `evaluator.py:_detect_qrs_for_batch()`.
