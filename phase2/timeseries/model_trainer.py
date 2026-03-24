@@ -25,7 +25,7 @@ from phase2.timeseries.config import (
 
 class InceptionBlock(nn.Module):
     def __init__(self, in_channels: int, n_filters: int = 32,
-                 kernel_sizes=(40, 20, 10)):
+                 kernel_sizes=(41, 21, 11)):
         super().__init__()
         self.bottleneck = nn.Conv1d(in_channels, n_filters, kernel_size=1,
                                     bias=False)
