@@ -211,7 +211,7 @@ def _train(model: nn.Module, data: dict, device: torch.device) -> None:
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", patience=5, factor=0.5, verbose=False
+        optimizer, mode="min", patience=5, factor=0.5
     )
 
     best_val_loss = float("inf")
