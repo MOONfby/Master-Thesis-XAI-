@@ -195,8 +195,13 @@ def load_tabular_bundle() -> Optional[TabularBundle]:
             random_state=42,
         )
 
-        # SHAP TreeExplainer
-        shap_explainer = shap.TreeExplainer(model)
+        # SHAP explainer — TreeExplainer preferred, fall back to KernelExplainer
+        # if model was saved with a different XGBoost version
+        try:
+            shap_explainer = shap.TreeExplainer(model)
+        except Exception:
+            background = shap.sample(X_train_np, 100)
+            shap_explainer = shap.KernelExplainer(model.predict_proba, background)
 
         return TabularBundle(
             data=data,
