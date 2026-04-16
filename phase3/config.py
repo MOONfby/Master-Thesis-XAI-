@@ -76,5 +76,5 @@ ADULT_CLASS_NAMES   = ["<=50K", ">50K"]
 # ------------------------------------------------------------------
 # LLM
 # ------------------------------------------------------------------
-LLM_MODEL  = "gpt-4o-mini"   # OpenAI model; change to "gpt-4o" for higher quality
+LLM_MODEL  = "gemini-2.0-flash"   # Gemini model via OpenAI-compatible endpoint
 MAX_TOKENS = 1024

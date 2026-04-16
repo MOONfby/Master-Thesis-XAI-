@@ -32,7 +32,7 @@ def render_sidebar() -> dict:
         value=st.session_state.get("api_key", default_key),
         type="password",
         label_visibility="collapsed",
-        placeholder="sk-...",
+        placeholder="AIza...",
         key="api_key_input",
     )
     if api_key:

@@ -19,7 +19,10 @@ class ClaudeExplanationClient:
     """
 
     def __init__(self, api_key: str):
-        self._client = OpenAI(api_key=api_key)
+        self._client = OpenAI(
+            api_key=api_key,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
 
     def stream_response(
         self,
