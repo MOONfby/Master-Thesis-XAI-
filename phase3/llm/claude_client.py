@@ -21,7 +21,7 @@ class ClaudeExplanationClient:
     def __init__(self, api_key: str):
         self._client = OpenAI(
             api_key=api_key,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            base_url="https://api.deepseek.com",
         )
 
     def stream_response(

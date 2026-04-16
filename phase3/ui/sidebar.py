@@ -32,7 +32,7 @@ def render_sidebar() -> dict:
         value=st.session_state.get("api_key", default_key),
         type="password",
         label_visibility="collapsed",
-        placeholder="AIza...",
+        placeholder="sk-...",
         key="api_key_input",
     )
     if api_key:
@@ -114,7 +114,7 @@ def render_sidebar() -> dict:
             "KTH Master's Thesis — Biying Feng, 2026  \n\n"
             "Translates XAI attribution outputs into natural language "
             "explanations tailored to three audience personas using "
-            f"OpenAI ({LLM_MODEL})."
+            f"DeepSeek ({LLM_MODEL})."
         )
 
     return {

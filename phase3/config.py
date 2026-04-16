@@ -76,5 +76,5 @@ ADULT_CLASS_NAMES   = ["<=50K", ">50K"]
 # ------------------------------------------------------------------
 # LLM
 # ------------------------------------------------------------------
-LLM_MODEL  = "gemini-2.0-flash"   # Gemini model via OpenAI-compatible endpoint
+LLM_MODEL  = "deepseek-chat"   # DeepSeek model, accessible from mainland China
 MAX_TOKENS = 1024
