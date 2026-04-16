@@ -207,9 +207,7 @@ def load_tabular_bundle() -> Optional[TabularBundle]:
             numerical_indices=num_idx,
             class_names=ADULT_CLASS_NAMES,
         )
-    except ImportError:
+    except Exception as e:
         traceback.print_exc()
-        return None
-    except Exception:
-        traceback.print_exc()
+        st.error(f"Tabular bundle failed: {type(e).__name__}: {e}")
         return None
