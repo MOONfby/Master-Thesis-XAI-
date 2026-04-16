@@ -76,5 +76,5 @@ ADULT_CLASS_NAMES   = ["<=50K", ">50K"]
 # ------------------------------------------------------------------
 # LLM
 # ------------------------------------------------------------------
-LLM_MODEL = "claude-haiku-4-5-20251001"
+LLM_MODEL  = "gpt-4o-mini"   # OpenAI model; change to "gpt-4o" for higher quality
 MAX_TOKENS = 1024

@@ -10,7 +10,7 @@ import streamlit as st
 from phase3.config import (
     MODALITIES, MODALITY_TS, MODALITY_IMAGE, MODALITY_TABULAR,
     TS_METHODS, IMAGE_METHODS, TABULAR_METHODS,
-    PERSONAS,
+    PERSONAS, LLM_MODEL,
 )
 
 
@@ -32,7 +32,7 @@ def render_sidebar() -> dict:
         value=st.session_state.get("api_key", default_key),
         type="password",
         label_visibility="collapsed",
-        placeholder="sk-ant-...",
+        placeholder="sk-...",
         key="api_key_input",
     )
     if api_key:
@@ -114,7 +114,7 @@ def render_sidebar() -> dict:
             "KTH Master's Thesis — Biying Feng, 2026  \n\n"
             "Translates XAI attribution outputs into natural language "
             "explanations tailored to three audience personas using "
-            f"Claude (claude-haiku-4-5)."
+            f"OpenAI ({LLM_MODEL})."
         )
 
     return {
