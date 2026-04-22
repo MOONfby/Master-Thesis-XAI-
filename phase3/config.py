@@ -76,5 +76,5 @@ ADULT_CLASS_NAMES   = ["<=50K", ">50K"]
 # ------------------------------------------------------------------
 # LLM
 # ------------------------------------------------------------------
-LLM_MODEL  = "deepseek-chat"   # DeepSeek model, accessible from mainland China
+LLM_MODEL  = "deepseek-chat"   # DeepSeek model
 MAX_TOKENS = 1024
