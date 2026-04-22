@@ -55,6 +55,9 @@ def render_whatif_panel(result: ExplanationResult, bundle) -> None:
     """
     _init_whatif_state(result, bundle)
 
+    # Reset counter — changing this forces all widgets to re-initialize from value=
+    rc = st.session_state.get("whatif_reset_count", 0)
+
     st.caption(
         "Adjust feature values below and observe how the model prediction changes. "
         "Click **Explain this change** to get an LLM interpretation."
@@ -80,7 +83,7 @@ def render_whatif_panel(result: ExplanationResult, bundle) -> None:
                 max_value=fmax,
                 value=current_val,
                 step=step,
-                key=f"whatif_slider_{feat}",
+                key=f"whatif_slider_{feat}_{rc}",
             )
             st.session_state["whatif_values"][feat] = new_val
 
@@ -98,7 +101,7 @@ def render_whatif_panel(result: ExplanationResult, bundle) -> None:
                     label=_FEATURE_LABELS.get(feat, feat),
                     options=labels,
                     index=current_int,
-                    key=f"whatif_select_{feat}",
+                    key=f"whatif_select_{feat}_{rc}",
                 )
                 st.session_state["whatif_values"][feat] = float(labels.index(selected))
             else:
@@ -107,7 +110,7 @@ def render_whatif_panel(result: ExplanationResult, bundle) -> None:
                     label=_FEATURE_LABELS.get(feat, feat),
                     options=list(range(n_cats)),
                     index=min(current_int, n_cats - 1),
-                    key=f"whatif_select_{feat}",
+                    key=f"whatif_select_{feat}_{rc}",
                 )
                 st.session_state["whatif_values"][feat] = float(selected_int)
 
@@ -185,19 +188,19 @@ def _get_original_values(result: ExplanationResult, bundle) -> dict:
 def _init_whatif_state(result: ExplanationResult, bundle) -> None:
     """Populate whatif_values from the current instance if instance changed."""
     if st.session_state.get("whatif_instance_idx") != result.instance_index:
-        _reset_whatif_state(result, bundle)
+        original = _get_original_values(result, bundle)
+        st.session_state["whatif_values"] = original
+        st.session_state["whatif_instance_idx"] = result.instance_index
+        st.session_state["whatif_reset_count"] = st.session_state.get("whatif_reset_count", 0) + 1
 
 
 def _reset_whatif_state(result: ExplanationResult, bundle) -> None:
-    """Reset all what-if values. Safe to call as on_click callback or before widgets render."""
+    """Reset all what-if values. Safe to call as on_click callback."""
     original = _get_original_values(result, bundle)
     st.session_state["whatif_values"] = original
     st.session_state["whatif_instance_idx"] = result.instance_index
-    # Delete widget keys so they re-initialize from value= on next render
-    for feat in ADULT_NUMERICAL_FEATURES:
-        st.session_state.pop(f"whatif_slider_{feat}", None)
-    for feat in ADULT_CATEGORICAL_FEATURES:
-        st.session_state.pop(f"whatif_select_{feat}", None)
+    # Increment reset counter — widget keys change, forcing re-initialization from value=
+    st.session_state["whatif_reset_count"] = st.session_state.get("whatif_reset_count", 0) + 1
 
 
 def _compute_whatif_prediction(values: dict, bundle) -> tuple:
