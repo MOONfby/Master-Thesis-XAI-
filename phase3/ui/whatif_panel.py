@@ -182,13 +182,23 @@ def _get_original_values(result: ExplanationResult, bundle) -> dict:
 def _init_whatif_state(result: ExplanationResult, bundle) -> None:
     """Populate whatif_values from the current instance if instance changed."""
     if st.session_state.get("whatif_instance_idx") != result.instance_index:
-        st.session_state["whatif_values"] = _get_original_values(result, bundle)
-        st.session_state["whatif_instance_idx"] = result.instance_index
+        _reset_whatif_state(result, bundle)
 
 
 def _reset_whatif_state(result: ExplanationResult, bundle) -> None:
-    st.session_state["whatif_values"] = _get_original_values(result, bundle)
+    original = _get_original_values(result, bundle)
+    st.session_state["whatif_values"] = original
     st.session_state["whatif_instance_idx"] = result.instance_index
+    # Reset widget keys directly so sliders/dropdowns visually update
+    for feat in ADULT_NUMERICAL_FEATURES:
+        st.session_state[f"whatif_slider_{feat}"] = float(original[feat])
+    for feat in ADULT_CATEGORICAL_FEATURES:
+        labels = getattr(bundle, "cat_labels", {}).get(feat, [])
+        if labels:
+            idx = min(int(round(float(original[feat]))), len(labels) - 1)
+            st.session_state[f"whatif_select_{feat}"] = labels[idx]
+        else:
+            st.session_state[f"whatif_select_{feat}"] = int(round(float(original[feat])))
 
 
 def _compute_whatif_prediction(values: dict, bundle) -> tuple:
