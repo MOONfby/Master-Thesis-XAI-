@@ -111,9 +111,12 @@ def render_whatif_panel(result: ExplanationResult, bundle) -> None:
                 )
                 st.session_state["whatif_values"][feat] = float(selected_int)
 
-        if st.button("Reset to original values", key="whatif_reset_btn"):
-            _reset_whatif_state(result, bundle)
-            st.rerun()
+        st.button(
+            "Reset to original values",
+            key="whatif_reset_btn",
+            on_click=_reset_whatif_state,
+            args=(result, bundle),
+        )
 
     # ── Right: live prediction ────────────────────────────────────
     with col_pred:
@@ -186,19 +189,15 @@ def _init_whatif_state(result: ExplanationResult, bundle) -> None:
 
 
 def _reset_whatif_state(result: ExplanationResult, bundle) -> None:
+    """Reset all what-if values. Safe to call as on_click callback or before widgets render."""
     original = _get_original_values(result, bundle)
     st.session_state["whatif_values"] = original
     st.session_state["whatif_instance_idx"] = result.instance_index
-    # Reset widget keys directly so sliders/dropdowns visually update
+    # Delete widget keys so they re-initialize from value= on next render
     for feat in ADULT_NUMERICAL_FEATURES:
-        st.session_state[f"whatif_slider_{feat}"] = float(original[feat])
+        st.session_state.pop(f"whatif_slider_{feat}", None)
     for feat in ADULT_CATEGORICAL_FEATURES:
-        labels = getattr(bundle, "cat_labels", {}).get(feat, [])
-        if labels:
-            idx = min(int(round(float(original[feat]))), len(labels) - 1)
-            st.session_state[f"whatif_select_{feat}"] = labels[idx]
-        else:
-            st.session_state[f"whatif_select_{feat}"] = int(round(float(original[feat])))
+        st.session_state.pop(f"whatif_select_{feat}", None)
 
 
 def _compute_whatif_prediction(values: dict, bundle) -> tuple:
