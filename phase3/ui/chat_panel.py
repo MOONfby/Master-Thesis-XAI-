@@ -108,21 +108,17 @@ def stream_opening_message(
 
     messages = [{"role": "user", "content": first_user_msg}]
 
-    # Stream into a placeholder
-    with st.chat_message("user"):
-        st.markdown(_strip_context_block(first_user_msg))
-
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
+    # Collect response silently (no direct rendering here — render happens
+    # via chat_container in render_chat_panel after st.rerun())
+    with st.spinner("Generating explanation..."):
         full_text = ""
         for chunk in client.stream_response(system_prompt, messages):
             full_text += chunk
-            placeholder.markdown(full_text + " ▌")
-        placeholder.markdown(full_text)
 
-    # Commit to history
+    # Commit to history and rerun so chat_container renders in the right place
     messages = client.append_turn(messages, "assistant", full_text)
     st.session_state["conversation_history"] = messages
+    st.rerun()
 
 
 def _stream_followup(user_input: str, api_key: str) -> None:
