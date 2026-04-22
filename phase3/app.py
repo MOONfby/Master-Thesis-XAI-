@@ -177,6 +177,23 @@ def main():
             with col_chat:
                 stream_opening_message(context_block, opening_q, system_prompt, api_key)
 
+        # What-If explain hook — triggered from whatif_panel.py
+        if st.session_state.get("whatif_explain_requested"):
+            whatif_ctx = st.session_state.pop("whatif_context_block", "")
+            st.session_state["whatif_explain_requested"] = False
+            if whatif_ctx and api_key:
+                system_prompt = get_system_prompt(persona, modality)
+                st.session_state["system_prompt"]        = system_prompt
+                st.session_state["conversation_history"] = []
+                with col_chat:
+                    stream_opening_message(
+                        whatif_ctx,
+                        "Explain what changed in this prediction and why these "
+                        "feature modifications matter.",
+                        system_prompt,
+                        api_key,
+                    )
+
 
 def _render_visualization(result, bundle) -> None:
     """Render the appropriate visualization for the given result."""

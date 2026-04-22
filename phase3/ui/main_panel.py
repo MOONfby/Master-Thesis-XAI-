@@ -38,9 +38,15 @@ def render_main_panel(result: ExplanationResult, bundle) -> None:
     st.markdown("---")
 
     # ── Tabs ─────────────────────────────────────────────────────
-    tab_attr, tab_metrics, tab_instance = st.tabs(
-        ["Attribution", "Metrics", "Instance Info"]
-    )
+    if result.modality == MODALITY_TABULAR:
+        tab_attr, tab_metrics, tab_instance, tab_whatif = st.tabs(
+            ["Attribution", "Metrics", "Instance Info", "What-If"]
+        )
+    else:
+        tab_attr, tab_metrics, tab_instance = st.tabs(
+            ["Attribution", "Metrics", "Instance Info"]
+        )
+        tab_whatif = None
 
     with tab_attr:
         _render_attribution(result, bundle)
@@ -50,6 +56,11 @@ def render_main_panel(result: ExplanationResult, bundle) -> None:
 
     with tab_instance:
         _render_instance_info(result, bundle)
+
+    if tab_whatif is not None:
+        with tab_whatif:
+            from phase3.ui.whatif_panel import render_whatif_panel
+            render_whatif_panel(result, bundle)
 
 
 def _render_attribution(result: ExplanationResult, bundle) -> None:

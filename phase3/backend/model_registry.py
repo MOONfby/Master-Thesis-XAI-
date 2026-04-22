@@ -59,6 +59,8 @@ class TabularBundle:
     feature_names: list[str]
     numerical_indices: list[int]
     class_names: list[str]
+    cat_labels: dict = field(default_factory=dict)     # {"workclass": ["Private", ...], ...}
+    feature_ranges: dict = field(default_factory=dict) # {"age": (17.0, 90.0), ...}
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -203,6 +205,37 @@ def load_tabular_bundle() -> Optional[TabularBundle]:
             background = shap.sample(X_train_np, 100)
             shap_explainer = shap.KernelExplainer(model.predict_proba, background)
 
+        # ── Category labels for What-If dropdowns ─────────────────
+        cat_labels: dict = {}
+        preprocessor = data.get("preprocessor")
+        if preprocessor is not None:
+            try:
+                cat_tf = preprocessor.named_transformers_["cat"]
+                for feat, cats in zip(
+                    ADULT_CATEGORICAL_FEATURES, cat_tf.categories_
+                ):
+                    cat_labels[feat] = [str(c) for c in cats.tolist()]
+            except (AttributeError, KeyError):
+                pass
+
+        # ── Numerical feature ranges for sliders ──────────────────
+        _FALLBACK_RANGES = {
+            "age": (17.0, 90.0),
+            "education-num": (1.0, 16.0),
+            "capital-gain": (0.0, 99999.0),
+            "capital-loss": (0.0, 4356.0),
+            "hours-per-week": (1.0, 99.0),
+        }
+        feature_ranges: dict = {}
+        df_ref = data.get("X_train_df")
+        if df_ref is None and data.get("X_train") is not None:
+            df_ref = pd.DataFrame(data["X_train"], columns=ADULT_FEATURE_NAMES)
+        for feat in ADULT_NUMERICAL_FEATURES:
+            if df_ref is not None and hasattr(df_ref, "columns") and feat in df_ref.columns:
+                feature_ranges[feat] = (float(df_ref[feat].min()), float(df_ref[feat].max()))
+            else:
+                feature_ranges[feat] = _FALLBACK_RANGES[feat]
+
         return TabularBundle(
             data=data,
             model=model,
@@ -211,6 +244,8 @@ def load_tabular_bundle() -> Optional[TabularBundle]:
             feature_names=ADULT_FEATURE_NAMES,
             numerical_indices=num_idx,
             class_names=ADULT_CLASS_NAMES,
+            cat_labels=cat_labels,
+            feature_ranges=feature_ranges,
         )
     except Exception as e:
         traceback.print_exc()
